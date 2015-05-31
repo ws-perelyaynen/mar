@@ -4,9 +4,8 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
-    "async": "^1.0.0",
-    "colors": "^1.0.3",
-    "request": "^2.55.0"
+    "mysql": "^2.7.0",
+    "request": "^2.56.0"
   },
   "devDependencies": {},
   "scripts": {
