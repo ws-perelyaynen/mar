@@ -1,43 +1,62 @@
-var mysql      = require('mysql');
-var request = require('request');
+var mysql      = require('mysql'); //cвязь с базой
+var request = require('request'); //либа для реквестов
 
-// drink4427
+////////////////////////////!!!!!!!!!!!!!!!!!!////////////////////////////////
+////////////////////////////******************////////////////////////////////
+////////////////////////////Не оптимизировано!////////////////////////////////
+////////////////////////////******************////////////////////////////////
+////////////////////////////!!!!!!!!!!!!!!!!!!////////////////////////////////
+
+//научусь работать с SQL - перепишу. Или нет.
+
+//////////////////////////////////////
+//Не забудь создать папку node_modules в корне проекта и есесн npm install
+//воткни свои данные для подключения к базе
+
+// drink4427 // drink4860
 var connection = mysql.createConnection({
-  host     	: 'localhost',
-  user     	: 'root',
-  password 	: 'throughglass',
-  port 		: 3306,
-  database 	: 'links'
+  host     	: 'localhost', //сервер
+  user     	: 'root', 		//логин база
+  password 	: 'throughglass', //пароль база
+  port 		: 3306, 			//порт
+  database 	: 'links' 			//имя базы
 });
+//количество записей в базе
 var COUNTER;
+//инициируем соединение
 connection.connect();
+//инициируем запрос к базе для определения количества записей
 connection.query('SELECT id FROM pages ORDER BY id DESC LIMIT 1', function(err,res) {
+	//после получения ответа инициализация счетчика
 	COUNTER = res[0].id;
 	console.log('COUNTER:', COUNTER);
-	for(var i = 1641; i < COUNTER; i++) {
+	// главный цикл
+	for(var i = 10780; i < COUNTER; i++) {
+		//собираем строку запроса для базы
 		var idString = 'id=' + i;
 		var connStr = 'SELECT pages.id, pages.hostname, pages.page FROM pages WHERE ' + idString + ';';
-		// console.log('connStr', connStr);
+		//создаем запрос на основе айдишника (перебираются тупо от 0 до COUNTER)
 		connection.query(connStr, function(err, rows, fields) {
-			// console.log(rows);
 			if (err) {
 				throw err
 			}
 			else  if(rows && rows[0].page){
+				//Получили из базы 1 запись и собираем строку uri для реквеста на сервер
+				// Логин-пароль всегда одинаковые. Меняется только то, что в базе валяется в столбце page
+				//собираем строку
 				var endString=  'http://dmixer:dmixerpassword1@dmixer-staging.elasticbeanstalk.com' + rows[0].page;
+				//пуляем реквест на сервер. Привет библиотеке request
 				request({
-					// url: exampleString,
-					url: endString,
-					followRedirect : false
+					url: endString,			//наш собранный uri
+					followRedirect : false 	// параметр кагбе намекает, что переходить по редиректу не стоит, а вот статус получить - стоит.
 				}, function  (err, response) {
-					// console.log('response', JSON.stringify(response.request.uri.pathname, false, 2));
 					if(err) {
 						console.log('err');
-					}else {
-						// console.log(response.statusCode);
-						var stringToUpdate = "page='" + response.request.uri.pathname + "'";
-						// console.log('adsfasdf', stringToUpdate);
-						connection.query('UPDATE pages SET resp_status=' + response.statusCode +' WHERE ' + stringToUpdate, function(err, updated) {
+					} else {
+						//в случае успешного запроса, получили ответ и из ответа собираем новую строку запроса к базе
+						var stringToUpdate = 'UPDATE pages SET resp_status=' + response.statusCode +' WHERE ' + "page='" + response.request.uri.pathname + "'";
+						//Обновить страницы цифиркой статуса (301 например), поиск страницы по полю page (example '/drink182.html')
+						connection.query( stringToUpdate, function(err, updated) {
 							if(err) {
 								console.log('err');
 							} else {
@@ -48,68 +67,10 @@ connection.query('SELECT id FROM pages ORDER BY id DESC LIMIT 1', function(err,r
 				});
 
 		  	} else {
-		  		// console.log(idString + ' has no property');
+		  		console.log('ERROR! ROWS UNDEFINED! check query to DB');
 		  	}
 		});
 
 	}
 
 })
-// return;
-
-
-  // var exampleString = 'http://dmixer:dmixerpassword1@dmixer-staging.elasticbeanstalk.com/desc240.html'
-
-
-// connection.end();
-
-/////////////////////////////////////////////////
-
-//библиотека необходимая для прогона тестов
-
-
-
-
-
-
-
-//асинхронные запросы. поехали
-// request({
-// 	url:jsonWithLinks.links[i],
-// 	followRedirect : false
-// 	}, function  (err, response) {
-// 		// console.log('jsonWithLinks', JSON.stringify(response.request.uri.href, null, '\t'), ' : ', response.statusCode);
-
-// 		//если 301 статус - заполняем массив
-// 		if(response.statusCode === 301) {
-// 			console.log('301+ ');
-// 			linksWithCode.push(response.request.uri.href);
-// 		}
-// 	})
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////
-
-
-
-
-
-
-// connection.query('SELECT * FROM pages;', function(err, rows, fields) {
-//   if (err) throw err;
-
-//   console.log('The solution is: ', rows);
-// });
-
-// connection.end();
